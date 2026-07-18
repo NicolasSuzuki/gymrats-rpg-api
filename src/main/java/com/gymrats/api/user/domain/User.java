@@ -12,12 +12,15 @@ public class User extends AuditableEntity {
   @Column(nullable = false, unique = true, length = 254) private String email;
   @Column(name = "password_hash", nullable = false, length = 100) private String passwordHash;
   @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private Role role;
+  @Column(nullable = false) private boolean active;
 
   protected User() {}
-  public User(String name, String email, String passwordHash) { this.id = UUID.randomUUID(); this.name = name; this.email = email; this.passwordHash = passwordHash; this.role = Role.USER; }
+  public User(String name, String email, String passwordHash) { this.id = UUID.randomUUID(); this.name = name; this.email = email; this.passwordHash = passwordHash; this.role = Role.USER; this.active = true; }
   public UUID getId() { return id; }
   public String getName() { return name; }
   public String getEmail() { return email; }
   public String getPasswordHash() { return passwordHash; }
   public Role getRole() { return role; }
+  public boolean isActive() { return active; }
+  public void deactivate() { this.active = false; }
 }

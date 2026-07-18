@@ -25,7 +25,9 @@ mvn spring-boot:run
 
 1. `POST /api/v1/auth/register`
 2. `POST /api/v1/auth/login`
-3. Enviar `Authorization: Bearer <token>` em `GET /api/v1/users/me`
+3. Enviar `Authorization: Bearer <token>` em `GET /api/v1/auth/me`
+
+O JWT expira em sete dias por padrão e pode ser configurado por `JWT_EXPIRATION`. No frontend Next.js, o token é mantido somente em cookie `HttpOnly`, `SameSite=Lax` e `Secure` em produção.
 
 Refresh token, login social, confirmação de e-mail e 2FA não pertencem ao MVP atual.
 
@@ -38,6 +40,12 @@ mvn verify
 ## Variáveis
 
 Veja `.env.example`. Em ambientes reais, substitua obrigatoriamente `JWT_SECRET` por um segredo Base64 seguro de pelo menos 256 bits e nunca o versione.
+
+Exemplo para gerar um segredo local:
+
+```bash
+openssl rand -base64 32
+```
 
 ## Organização
 

@@ -23,7 +23,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     if (authorization != null && authorization.startsWith("Bearer ") && SecurityContextHolder.getContext().getAuthentication() == null) {
       try {
         var email = jwtService.subject(authorization.substring(7));
-        users.findByEmailIgnoreCase(email).ifPresent(user -> SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(email, null, java.util.List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())))));
+        users.findByEmailIgnoreCase(email).filter(user -> user.isActive()).ifPresent(user -> SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(email, null, java.util.List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())))));
       } catch (JwtException | IllegalArgumentException ignored) { SecurityContextHolder.clearContext(); }
     }
     chain.doFilter(request, response);

@@ -4,6 +4,7 @@ import com.gymrats.api.auth.api.*;
 import com.gymrats.api.security.JwtService;
 import com.gymrats.api.user.domain.User;
 import com.gymrats.api.user.domain.UserRepository;
+import com.gymrats.api.user.api.UserResponse;
 import java.util.Locale;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,6 +32,11 @@ public class AuthService {
     var email = normalize(request.email());
     authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, request.password()));
     return tokenFor(users.findByEmailIgnoreCase(email).orElseThrow());
+  }
+
+  @Transactional(readOnly = true)
+  public UserResponse currentUser(String email) {
+    return users.findByEmailIgnoreCase(email).map(UserResponse::from).orElseThrow();
   }
 
   private AuthResponse tokenFor(User user) { return new AuthResponse(jwtService.generate(user), "Bearer", jwtService.expirationSeconds()); }
