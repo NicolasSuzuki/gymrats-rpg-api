@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -25,7 +26,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
-  @Bean UserDetailsService userDetailsService(UserRepository users) { return email -> users.findByEmailIgnoreCase(email).map(u -> User.withUsername(u.getEmail()).password(u.getPasswordHash()).roles(u.getRole().name()).disabled(!u.isActive()).build()).orElseThrow(); }
+  @Bean UserDetailsService userDetailsService(UserRepository users) { return email -> users.findByEmailIgnoreCase(email).map(u -> User.withUsername(u.getEmail()).password(u.getPasswordHash()).roles(u.getRole().name()).disabled(!u.isActive()).build()).orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado.")); }
   @Bean PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(12); }
   @Bean DaoAuthenticationProvider authenticationProvider(UserDetailsService details, PasswordEncoder encoder) { var provider = new DaoAuthenticationProvider(details); provider.setPasswordEncoder(encoder); return provider; }
   @Bean AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception { return configuration.getAuthenticationManager(); }
