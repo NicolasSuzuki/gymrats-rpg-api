@@ -47,6 +47,28 @@ Exemplo para gerar um segredo local:
 openssl rand -base64 32
 ```
 
+### Erro `Illegal base64 character` ao iniciar a API
+
+Se a inicialização falhar em `JwtService` com uma mensagem semelhante a
+`io.jsonwebtoken.io.DecodingException: Illegal base64 character`, o valor de
+`JWT_SECRET` não está em Base64 padrão. Isso costuma acontecer quando o valor
+do `.env` ainda é um placeholder ou foi gerado em Base64URL.
+
+No PowerShell, gere e carregue um segredo Base64 seguro de 256 bits com:
+
+```powershell
+$bytes = New-Object byte[] 32
+$rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+$rng.GetBytes($bytes)
+$rng.Dispose()
+$jwtSecret = [Convert]::ToBase64String($bytes)
+$env:JWT_SECRET = $jwtSecret
+```
+
+Copie o valor de `$jwtSecret` para `JWT_SECRET` no arquivo `.env`, sem aspas ou
+espaços adicionais, e execute novamente `mvn spring-boot:run`. O `.env` contém
+segredos locais e não deve ser adicionado ao Git.
+
 ## Organização
 
 - `auth`: cadastro e login.
