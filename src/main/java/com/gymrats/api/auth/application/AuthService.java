@@ -36,7 +36,7 @@ public class AuthService {
 
   @Transactional(readOnly = true)
   public UserResponse currentUser(String email) {
-    return users.findByEmailIgnoreCase(email).map(UserResponse::from).orElseThrow();
+    return users.findByEmailIgnoreCase(email).map(user -> UserResponse.from(user, null)).orElseThrow();
   }
 
   private AuthResponse tokenFor(User user) { return new AuthResponse(jwtService.generate(user), "Bearer", jwtService.expirationSeconds()); }

@@ -13,6 +13,10 @@ spring:
       hibernate.jdbc.time_zone: UTC
   flyway:
     enabled: true
+  servlet:
+    multipart:
+      max-file-size: 6MB
+      max-request-size: 6MB
 management:
   endpoints:
     web:
@@ -22,9 +26,27 @@ management:
     health:
       show-details: never
 app:
+  media:
+    provider: ${MEDIA_STORAGE_PROVIDER:local}
+    storage-path: ${MEDIA_STORAGE_PATH:${java.io.tmpdir}/gymrats-media}
+    supabase:
+      url: ${SUPABASE_URL:}
+      bucket: ${SUPABASE_STORAGE_BUCKET:gymrats-media}
+      service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
+  progression:
+    advanced:
+      s5-weeks: ${ADVANCED_RANK_S5_WEEKS:4}
+      s4-weeks: ${ADVANCED_RANK_S4_WEEKS:8}
+      s3-weeks: ${ADVANCED_RANK_S3_WEEKS:12}
+      s2-weeks: ${ADVANCED_RANK_S2_WEEKS:16}
+      s1-weeks: ${ADVANCED_RANK_S1_WEEKS:20}
+      protection-days: ${ADVANCED_RANK_PROTECTION_DAYS:7}
+      tie-breaker: ${ADVANCED_RANK_TIE_BREAKER:DISTINCT_ACTIVE_DAYS_THEN_CHECK_INS}
   cors:
     allowed-origin: ${FRONTEND_ORIGIN:http://localhost:3000}
   security:
     jwt:
       secret: ${JWT_SECRET}
       expiration-seconds: ${JWT_EXPIRATION:604800}
+server:
+  port: ${PORT:8080}
