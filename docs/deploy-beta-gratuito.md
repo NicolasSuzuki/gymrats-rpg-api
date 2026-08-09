@@ -45,9 +45,15 @@ gcloud run deploy gymrats-rpg-api \
   --memory 1Gi \
   --min-instances 0 \
   --max-instances 1 \
+  --cpu-boost \
   --concurrency 40 \
   --timeout 60
 ```
+
+`--cpu-boost` reduz o tempo de inicialização sem manter uma instância ociosa.
+Com `--min-instances 0`, a primeira chamada após um período sem uso ainda pode
+sofrer cold start. Para eliminar esse atraso, altere para `--min-instances 1`,
+ciente de que instâncias mínimas geram cobrança mesmo quando estão ociosas.
 
 O acesso público do Cloud Run é necessário para o frontend alcançar a API; os
 endpoints privados continuam protegidos pelo JWT da aplicação.

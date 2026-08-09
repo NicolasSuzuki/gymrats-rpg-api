@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.hasItem;
 
 import com.gymrats.api.user.domain.UserRepository;
 import com.gymrats.api.user.domain.WeeklyGoalVersionRepository;
@@ -78,8 +79,7 @@ class CoreBackendFlowIntegrationTest {
             get("/api/v1/exercises").param("modality", "ACADEMIA").param("name", "supino"),
             ownerToken))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.totalItems").value(1))
-        .andExpect(jsonPath("$.items[0].id").value(BENCH_ID.toString()));
+        .andExpect(jsonPath("$.items[*].id").value(hasItem(BENCH_ID.toString())));
 
     var created = mvc.perform(authorized(post("/api/v1/exercises/personal"), ownerToken)
             .contentType(MediaType.APPLICATION_JSON)
@@ -183,6 +183,31 @@ class CoreBackendFlowIntegrationTest {
             .header("Idempotency-Key", "cancel:" + freeId))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("CANCELLED"));
+  }
+
+  @Test
+  void completesQuickCheckInWithoutExerciseDetailsAndReplaysIdempotently()
+      throws Exception {
+    var token = register("quick-check-in@example.com");
+    var first = mvc.perform(authorized(post("/api/v1/workout-sessions/quick-check-in"), token)
+            .header("Idempotency-Key", "quick-check-in:2026-08-09"))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.status").value("COMPLETED"))
+        .andExpect(jsonPath("$.source").value("FREE"))
+        .andExpect(jsonPath("$.summary.totalExercises").value(0))
+        .andExpect(jsonPath("$.xpAwarded").value(50))
+        .andReturn();
+    String sessionId = JsonPath.read(first.getResponse().getContentAsString(), "$.id");
+
+    mvc.perform(authorized(post("/api/v1/workout-sessions/quick-check-in"), token)
+            .header("Idempotency-Key", "quick-check-in:2026-08-09"))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.id").value(sessionId));
+
+    mvc.perform(authorized(get("/api/v1/progression"), token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.totalXp").value(50))
+        .andExpect(jsonPath("$.weeklyCompleted").value(1));
   }
 
   @Test

@@ -86,6 +86,30 @@ public class WorkoutSessionService {
   }
 
   @Transactional
+  public WorkoutSessionResponse quickCheckIn(User user, String key) {
+    validateIdempotencyKey(key);
+    var replay = operations.findByOwnerIdAndKey(user.getId(), key);
+    if (replay.isPresent()) {
+      var saved = replay.get();
+      if (!saved.getOperation().equals("COMPLETE")) {
+        throw new DomainConflictException("Idempotency-Key já utilizada em outra operação.");
+      }
+      return WorkoutSessionResponse.from(saved.getSession());
+    }
+    sessions.findByOwnerIdAndStatus(user.getId(), WorkoutSessionStatus.IN_PROGRESS)
+        .ifPresent(existing -> {
+          throw new DomainConflictException(
+              "Finalize ou cancele o treino em andamento antes do check-in rápido.");
+        });
+    var session = new WorkoutSession(user, WorkoutSessionSource.FREE, null);
+    session.complete();
+    sessions.save(session);
+    progression.awardWorkout(user, session);
+    operations.save(new IdempotencyOperation(user.getId(), key, "COMPLETE", session));
+    return WorkoutSessionResponse.from(session);
+  }
+
+  @Transactional
   public SessionExerciseResult updateExercise(
       User user, UUID sessionId, UUID exerciseId, UpdateSessionExerciseRequest request) {
     if (request.status() == null && request.data() == null) {
@@ -131,9 +155,7 @@ public class WorkoutSessionService {
 
   private WorkoutSessionResponse terminal(
       User user, UUID sessionId, String key, String operation, boolean complete) {
-    if (key == null || key.isBlank() || key.length() > 120) {
-      throw new DomainConflictException("Idempotency-Key é obrigatório e deve ter até 120 caracteres.");
-    }
+    validateIdempotencyKey(key);
     var replay = operations.findByOwnerIdAndKey(user.getId(), key);
     if (replay.isPresent()) {
       var saved = replay.get();
@@ -150,6 +172,13 @@ public class WorkoutSessionService {
     if (complete) progression.awardWorkout(user, session);
     operations.save(new IdempotencyOperation(user.getId(), key, operation, session));
     return WorkoutSessionResponse.from(session);
+  }
+
+  private void validateIdempotencyKey(String key) {
+    if (key == null || key.isBlank() || key.length() > 120) {
+      throw new DomainConflictException(
+          "Idempotency-Key é obrigatório e deve ter até 120 caracteres.");
+    }
   }
 
   private WorkoutSession requireOwned(User user, UUID id) {

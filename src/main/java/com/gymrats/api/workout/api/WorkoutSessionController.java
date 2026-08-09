@@ -42,6 +42,14 @@ public class WorkoutSessionController {
     return service.active(currentUser.require(authentication));
   }
 
+  @PostMapping("/quick-check-in")
+  @ResponseStatus(HttpStatus.CREATED)
+  public WorkoutSessionResponse quickCheckIn(
+      @RequestHeader("Idempotency-Key") String idempotencyKey,
+      Authentication authentication) {
+    return service.quickCheckIn(currentUser.require(authentication), idempotencyKey);
+  }
+
   @PatchMapping("/{id}/exercises/{exerciseId}")
   public SessionExerciseResponse updateExercise(
       @PathVariable UUID id,
