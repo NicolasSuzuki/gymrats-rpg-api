@@ -15,6 +15,8 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
@@ -102,6 +104,28 @@ public class GlobalExceptionHandler {
         "O corpo da solicitação é inválido.",
         request,
         List.of());
+  }
+
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  ResponseEntity<ApiError> invalidParameter(
+      MethodArgumentTypeMismatchException exception, HttpServletRequest request) {
+    return error(
+        HttpStatus.BAD_REQUEST,
+        "INVALID_REQUEST",
+        "Verifique os parâmetros da solicitação.",
+        request,
+        List.of(new ApiError.FieldError(exception.getName(), "Informe um valor válido.")));
+  }
+
+  @ExceptionHandler(MissingServletRequestParameterException.class)
+  ResponseEntity<ApiError> missingParameter(
+      MissingServletRequestParameterException exception, HttpServletRequest request) {
+    return error(
+        HttpStatus.BAD_REQUEST,
+        "INVALID_REQUEST",
+        "Informe os parâmetros obrigatórios da solicitação.",
+        request,
+        List.of(new ApiError.FieldError(exception.getParameterName(), "Este campo é obrigatório.")));
   }
 
   @ExceptionHandler(MaxUploadSizeExceededException.class)

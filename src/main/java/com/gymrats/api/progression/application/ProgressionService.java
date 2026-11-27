@@ -59,6 +59,7 @@ public class ProgressionService {
   private final UserRepository users;
   private final NotificationService notifications;
   private final AdvancedProgressionService advancedProgression;
+  private final com.gymrats.api.motivation.application.MotivationService motivation;
 
   public ProgressionService(
       XpEventRepository xpEvents,
@@ -67,7 +68,8 @@ public class ProgressionService {
       WeeklyGoalVersionRepository goals,
       UserRepository users,
       NotificationService notifications,
-      AdvancedProgressionService advancedProgression) {
+      AdvancedProgressionService advancedProgression,
+      com.gymrats.api.motivation.application.MotivationService motivation) {
     this.xpEvents = xpEvents;
     this.achievements = achievements;
     this.sessions = sessions;
@@ -75,6 +77,7 @@ public class ProgressionService {
     this.users = users;
     this.notifications = notifications;
     this.advancedProgression = advancedProgression;
+    this.motivation = motivation;
   }
 
   @Transactional
@@ -169,18 +172,13 @@ public class ProgressionService {
   @Transactional
   public String selectTitle(User user, String title) {
     String normalized = title == null ? "" : title.trim();
-    if (!normalized.isEmpty()) {
-      boolean unlocked =
-          achievements.findByUserIdOrderByUnlockedAtDesc(user.getId()).stream()
-              .map(value -> definition(value.getCode()).title())
-              .anyMatch(normalized::equals);
-      if (!unlocked) {
-        throw new AccessDeniedException("Selecione apenas um título desbloqueado.");
-      }
-    }
-    user.selectTitle(normalized);
-    users.save(user);
-    return normalized;
+    return motivation
+        .select(
+            user,
+            new com.gymrats.api.motivation.api.MotivationController.Selection(
+                normalized, null, null))
+        .selected()
+        .titleId();
   }
 
   private void unlockEligible(User user, Instant now) {

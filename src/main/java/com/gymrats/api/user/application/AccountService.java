@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AccountService {
+  private final com.gymrats.api.duo.application.DuoService duo;
   private final UserRepository users;
   private final MediaService media;
   private final FeedPostRepository posts;
@@ -27,6 +28,7 @@ public class AccountService {
   private final com.gymrats.api.feedback.application.FeedbackService feedback;
 
   public AccountService(
+      com.gymrats.api.duo.application.DuoService duo,
       UserRepository users,
       MediaService media,
       FeedPostRepository posts,
@@ -36,6 +38,7 @@ public class AccountService {
       SocialGroupRepository groups,
       GroupMemberRepository members,
       com.gymrats.api.feedback.application.FeedbackService feedback) {
+    this.duo = duo;
     this.users = users;
     this.media = media;
     this.posts = posts;
@@ -49,6 +52,7 @@ public class AccountService {
 
   @Transactional
   public void delete(User user) {
+    duo.deleteFor(user);
     feedback.removeFor(user);
     media.removeAllFor(user);
     comments.deleteAll(comments.findByOwnerId(user.getId()));

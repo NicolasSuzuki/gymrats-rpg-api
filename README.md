@@ -84,6 +84,26 @@ No beta, use `MEDIA_STORAGE_PROVIDER=supabase`; a API mantém a chave privilegia
 somente no servidor. Metadados, checksum SHA-256, autoria e vínculo com a sessão
 continuam no PostgreSQL.
 
+## Dupla privada e motivação
+
+Os módulos `/api/v1/duo` e `/api/v1/motivation` adicionam parceria privada entre
+duas pessoas, metas individuais com progresso cooperativo, encontros,
+lembranças com fotos opcionais e seleção de recompensas por conta. Lembretes
+são exibidos somente no app; não há envio de push, e-mail ou SMS.
+
+Esta entrega exige a migration **V16** e o frontend compatível. O acesso às
+fotos privadas depende do vínculo ativo; encerrar a parceria revoga o acesso
+de ambos e remove o conteúdo compartilhado daquele espaço. A seleção de
+títulos, molduras e itens é validada e persistida pela API; temas mudam apenas
+a apresentação. Consulte [dupla e motivação](docs/duo-motivation.md) para
+endpoints, limites, privacidade e atualização do ambiente.
+
+A coleção distingue oito marcos por dias de atividade e títulos legados por
+conquista auditada (`Vanguarda`/`WEEKLY_THREE` e `Ascendente`/`XP_500`). A resposta
+indica `progressUnit` igual a `dias` ou `conquista`; os requisitos anteriores
+não são convertidos em dias acumulados. Na ausência de preferências da V16,
+um título anteriormente selecionado e ainda elegível é preservado.
+
 ## Progressão avançada
 
 - `GET /api/v1/progression/advanced`: retorna a maestria independente das seis classes, o sub-rank atual e o histórico auditável.
@@ -136,6 +156,8 @@ segredos locais e não deve ser adicionado ao Git.
 - `plan`: planos de treino versionados.
 - `workout`: sessões, autosave e conclusão idempotente.
 - `feed`: fotos, publicações, diário e comentários.
+- `duo`: parceria privada, encontros, lembranças e incentivos.
+- `motivation`: próximos marcos e seleção de recompensas por conta.
 - `security`: JWT e configuração de acesso.
 - `shared`: auditoria e respostas de erro.
 - `config`: configurações transversais.
