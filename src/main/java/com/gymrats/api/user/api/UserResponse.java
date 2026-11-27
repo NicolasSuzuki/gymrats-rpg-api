@@ -17,7 +17,10 @@ public record UserResponse(
     String characterClass,
     String universe,
     Instant createdAt,
-    Instant updatedAt) {
+    Instant updatedAt,
+    boolean photoStorageConsent,
+    Instant termsAcceptedAt,
+    String termsVersion) {
   public static UserResponse from(User user, Integer weeklyGoal) {
     return new UserResponse(
         user.getId(),
@@ -31,6 +34,9 @@ public record UserResponse(
         user.getCharacterClass() == null ? null : user.getCharacterClass().name(),
         user.getUniverse().name().toLowerCase(java.util.Locale.ROOT),
         user.getCreatedAt(),
-        user.getUpdatedAt());
+        user.getUpdatedAt(),
+        user.isPhotoStorageConsent(),
+        user.getTermsAcceptedAt(),
+        user.getTermsVersion());
   }
 }

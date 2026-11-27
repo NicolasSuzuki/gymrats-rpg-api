@@ -27,6 +27,33 @@ mvn spring-boot:run
 2. `POST /api/v1/auth/login`
 3. Enviar `Authorization: Bearer <token>` em `GET /api/v1/auth/me`
 
+Novos cadastros devem enviar `acceptedTerms: true`. A API registra a data do
+aceite e a versão `2026-11-26`; `termsVersion` pode ser omitida ou conter essa
+versão. `photoStorageConsent` é opcional e assume `false`. Esses dados são
+consultáveis no perfil autenticado. Contas anteriores à migration V14 mantêm
+o aceite como desconhecido, sem atribuir consentimento retroativo.
+
+## Histórico pessoal e feedback
+
+- `GET /api/v1/exercises/{id}/history`: até 30 sessões concluídas mais recentes
+  do próprio usuário, com séries, carga, repetições e métricas de duração/distância.
+  `summary` agrega todo o histórico concluído: sessões, séries, volume em kg e
+  recordes. Exercícios pulados ou pendentes não contam. O histórico de outra
+  pessoa nunca é retornado, mesmo para um exercício global.
+- As sessões incluem `exercises[].exerciseName`, obtido em lote para evitar uma
+  chamada por exercício no frontend. As coleções de séries também usam batch fetch.
+- `POST /api/v1/feedback`: recebe `category` (`BUG`, `SUGGESTION` ou `OTHER`),
+  `description` com 10–2000 caracteres e, opcionalmente, `path` e `requestId`.
+  Retorna `201` com `id` e `createdAt`. O feedback fica no banco; não é enviado
+  por e-mail nem a serviços externos. A rota aceita apenas caminhos locais e
+  remove query string e fragmento antes de persistir. Excluir a conta também
+  remove todos os seus relatos, antes da anonimização do histórico de treinos.
+
+Todas as respostas incluem `X-Request-Id`. Valores recebidos são aceitos apenas
+com 1–80 caracteres alfanuméricos, ponto, traço ou sublinhado; caso contrário,
+a API gera um UUID. Os logs de correlação contêm apenas identificador, método,
+status e duração, sem corpo, token, e-mail, rota ou query string.
+
 O JWT expira em sete dias por padrão e pode ser configurado por `JWT_EXPIRATION`. No frontend Next.js, o token é mantido somente em cookie `HttpOnly`, `SameSite=Lax` e `Secure` em produção.
 
 Refresh token, login social, confirmação de e-mail e 2FA não pertencem ao MVP atual.

@@ -54,7 +54,7 @@ public class WorkoutSession extends AuditableEntity {
     this.status = WorkoutSessionStatus.IN_PROGRESS;
     this.source = source;
     this.planVersion = planVersion;
-    this.startedAt = Instant.now();
+    this.startedAt = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
   }
 
   public UUID getId() { return id; }
@@ -70,14 +70,14 @@ public class WorkoutSession extends AuditableEntity {
 
   public void complete() {
     this.status = WorkoutSessionStatus.COMPLETED;
-    this.completedAt = Instant.now();
+    this.completedAt = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
     this.xpAwarded = 50;
     this.activeUserId = null;
   }
 
   public void cancel() {
     this.status = WorkoutSessionStatus.CANCELLED;
-    this.completedAt = Instant.now();
+    this.completedAt = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
     this.xpAwarded = 0;
     this.activeUserId = null;
   }

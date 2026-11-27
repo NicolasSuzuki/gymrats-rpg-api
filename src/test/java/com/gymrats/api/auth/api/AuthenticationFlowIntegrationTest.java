@@ -27,7 +27,7 @@ class AuthenticationFlowIntegrationTest {
   @Test
   void registersAuthenticatesAndReturnsCurrentUser() throws Exception {
     var registerBody = """
-        {"name":"Nicolas","email":"nicolas@example.com","password":"password123"}
+        {"name":"Nicolas","email":"nicolas@example.com","password":"password123","acceptedTerms":true}
         """;
     var registerResult = mvc.perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON).content(registerBody))
         .andExpect(status().isCreated()).andExpect(jsonPath("$.tokenType").value("Bearer")).andReturn();
@@ -52,8 +52,8 @@ class AuthenticationFlowIntegrationTest {
 
   @Test
   void rejectsDuplicateEmailAndAnonymousAccess() throws Exception {
-    var body = "{\"name\":\"Nicolas\",\"email\":\"duplicate@example.com\",\"password\":\"password123\"}";
-    var duplicatedWithDifferentCase = "{\"name\":\"Nicolas\",\"email\":\"DUPLICATE@example.com\",\"password\":\"password123\"}";
+    var body = "{\"name\":\"Nicolas\",\"email\":\"duplicate@example.com\",\"password\":\"password123\",\"acceptedTerms\":true}";
+    var duplicatedWithDifferentCase = "{\"name\":\"Nicolas\",\"email\":\"DUPLICATE@example.com\",\"password\":\"password123\",\"acceptedTerms\":true}";
     mvc.perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isCreated());
     mvc.perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON).content(duplicatedWithDifferentCase)).andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("EMAIL_ALREADY_USED"));
     mvc.perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"\",\"email\":\"invalid\",\"password\":\"short\"}"))
@@ -64,7 +64,7 @@ class AuthenticationFlowIntegrationTest {
 
   @Test
   void rejectsInvalidCredentialsAndInactiveUsersWithTheSameMessage() throws Exception {
-    var body = "{\"name\":\"Inactive\",\"email\":\"inactive@example.com\",\"password\":\"password123\"}";
+    var body = "{\"name\":\"Inactive\",\"email\":\"inactive@example.com\",\"password\":\"password123\",\"acceptedTerms\":true}";
     var registration = mvc.perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isCreated()).andReturn();
     String issuedToken = JsonPath.read(registration.getResponse().getContentAsString(), "$.accessToken");
     var inactive = users.findByEmailIgnoreCase("inactive@example.com").orElseThrow();

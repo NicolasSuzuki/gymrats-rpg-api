@@ -29,4 +29,14 @@ public interface ExerciseRepository extends JpaRepository<Exercise, UUID> {
       Pageable pageable);
 
   Optional<Exercise> findByIdAndArchivedFalse(UUID id);
+
+  interface ExerciseName { UUID getId(); String getName(); }
+
+  @Query("""
+      select e.id as id, e.name as name from Exercise e
+      where e.id in :ids and
+        (e.visibility = com.gymrats.api.exercise.domain.ExerciseVisibility.GLOBAL or e.owner.id = :owner)
+      """)
+  java.util.List<ExerciseName> findVisibleNames(
+      @Param("ids") java.util.Collection<UUID> ids, @Param("owner") UUID owner);
 }

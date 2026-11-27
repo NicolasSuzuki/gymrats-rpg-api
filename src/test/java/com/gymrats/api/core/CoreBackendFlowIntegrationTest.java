@@ -143,6 +143,7 @@ class CoreBackendFlowIntegrationTest {
             .content("{\"planId\":\"" + planId + "\"}"))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.source").value("PLAN"))
+        .andExpect(jsonPath("$.exercises[0].exerciseName").value("Agachamento livre"))
         .andExpect(jsonPath("$.planSnapshot.version").value(1))
         .andReturn();
     String sessionId = JsonPath.read(started.getResponse().getContentAsString(), "$.id");
@@ -299,7 +300,7 @@ class CoreBackendFlowIntegrationTest {
   private String register(String email) throws Exception {
     var result = mvc.perform(post("/api/v1/auth/register")
             .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"name\":\"QA Backend\",\"email\":\"" + email + "\",\"password\":\"password123\"}"))
+            .content("{\"name\":\"QA Backend\",\"email\":\"" + email + "\",\"password\":\"password123\",\"acceptedTerms\":true}"))
         .andExpect(status().isCreated())
         .andReturn();
     return JsonPath.read(result.getResponse().getContentAsString(), "$.accessToken");

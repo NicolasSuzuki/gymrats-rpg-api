@@ -24,6 +24,7 @@ public class AccountService {
   private final FriendRequestRepository requests;
   private final SocialGroupRepository groups;
   private final GroupMemberRepository members;
+  private final com.gymrats.api.feedback.application.FeedbackService feedback;
 
   public AccountService(
       UserRepository users,
@@ -33,7 +34,8 @@ public class AccountService {
       FriendshipRepository friendships,
       FriendRequestRepository requests,
       SocialGroupRepository groups,
-      GroupMemberRepository members) {
+      GroupMemberRepository members,
+      com.gymrats.api.feedback.application.FeedbackService feedback) {
     this.users = users;
     this.media = media;
     this.posts = posts;
@@ -42,10 +44,12 @@ public class AccountService {
     this.requests = requests;
     this.groups = groups;
     this.members = members;
+    this.feedback = feedback;
   }
 
   @Transactional
   public void delete(User user) {
+    feedback.removeFor(user);
     media.removeAllFor(user);
     comments.deleteAll(comments.findByOwnerId(user.getId()));
     posts.deleteAll(posts.findByOwnerId(user.getId()));

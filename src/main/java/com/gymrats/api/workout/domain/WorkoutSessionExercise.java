@@ -31,6 +31,7 @@ public class WorkoutSessionExercise {
   @Column(length = 1000) private String notes;
 
   @OneToMany(mappedBy = "sessionExercise", cascade = CascadeType.ALL, orphanRemoval = true)
+  @org.hibernate.annotations.BatchSize(size = 100)
   @OrderBy("position ASC")
   private List<WorkoutSessionSet> sets = new ArrayList<>();
 
