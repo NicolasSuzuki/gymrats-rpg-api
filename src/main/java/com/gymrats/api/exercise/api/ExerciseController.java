@@ -27,10 +27,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class ExerciseController {
   private final ExerciseService service;
   private final CurrentUserService currentUser;
+  private final com.gymrats.api.exercise.application.ExerciseHistoryService history;
 
-  public ExerciseController(ExerciseService service, CurrentUserService currentUser) {
+  public ExerciseController(ExerciseService service, CurrentUserService currentUser,
+      com.gymrats.api.exercise.application.ExerciseHistoryService history) {
     this.service = service;
     this.currentUser = currentUser;
+    this.history = history;
   }
 
   @GetMapping
@@ -50,6 +53,12 @@ public class ExerciseController {
   @GetMapping("/{id}")
   public ExerciseResponse get(@PathVariable UUID id, Authentication authentication) {
     return service.get(currentUser.require(authentication), id);
+  }
+
+  @GetMapping("/{id}/history")
+  @Operation(summary = "Consulta histórico e recordes do próprio usuário para um exercício")
+  public ExerciseHistoryResponse history(@PathVariable UUID id, Authentication authentication) {
+    return history.history(currentUser.require(authentication), id);
   }
 
   @PostMapping

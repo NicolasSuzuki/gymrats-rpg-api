@@ -361,7 +361,7 @@ class AdvancedBackendFlowIntegrationTest {
                     + name
                     + "\",\"email\":\""
                     + email
-                    + "\",\"password\":\"password123\"}"))
+                    + "\",\"password\":\"password123\",\"acceptedTerms\":true}"))
         .andExpect(status().isCreated())
         .andReturn();
     String token = JsonPath.read(result.getResponse().getContentAsString(), "$.accessToken");

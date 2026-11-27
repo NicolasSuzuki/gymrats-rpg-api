@@ -27,6 +27,33 @@ mvn spring-boot:run
 2. `POST /api/v1/auth/login`
 3. Enviar `Authorization: Bearer <token>` em `GET /api/v1/auth/me`
 
+Novos cadastros devem enviar `acceptedTerms: true`. A API registra a data do
+aceite e a versão `2026-11-26`; `termsVersion` pode ser omitida ou conter essa
+versão. `photoStorageConsent` é opcional e assume `false`. Esses dados são
+consultáveis no perfil autenticado. Contas anteriores à migration V14 mantêm
+o aceite como desconhecido, sem atribuir consentimento retroativo.
+
+## Histórico pessoal e feedback
+
+- `GET /api/v1/exercises/{id}/history`: até 30 sessões concluídas mais recentes
+  do próprio usuário, com séries, carga, repetições e métricas de duração/distância.
+  `summary` agrega todo o histórico concluído: sessões, séries, volume em kg e
+  recordes. Exercícios pulados ou pendentes não contam. O histórico de outra
+  pessoa nunca é retornado, mesmo para um exercício global.
+- As sessões incluem `exercises[].exerciseName`, obtido em lote para evitar uma
+  chamada por exercício no frontend. As coleções de séries também usam batch fetch.
+- `POST /api/v1/feedback`: recebe `category` (`BUG`, `SUGGESTION` ou `OTHER`),
+  `description` com 10–2000 caracteres e, opcionalmente, `path` e `requestId`.
+  Retorna `201` com `id` e `createdAt`. O feedback fica no banco; não é enviado
+  por e-mail nem a serviços externos. A rota aceita apenas caminhos locais e
+  remove query string e fragmento antes de persistir. Excluir a conta também
+  remove todos os seus relatos, antes da anonimização do histórico de treinos.
+
+Todas as respostas incluem `X-Request-Id`. Valores recebidos são aceitos apenas
+com 1–80 caracteres alfanuméricos, ponto, traço ou sublinhado; caso contrário,
+a API gera um UUID. Os logs de correlação contêm apenas identificador, método,
+status e duração, sem corpo, token, e-mail, rota ou query string.
+
 O JWT expira em sete dias por padrão e pode ser configurado por `JWT_EXPIRATION`. No frontend Next.js, o token é mantido somente em cookie `HttpOnly`, `SameSite=Lax` e `Secure` em produção.
 
 Refresh token, login social, confirmação de e-mail e 2FA não pertencem ao MVP atual.
@@ -56,6 +83,26 @@ O desenvolvimento local usa `MEDIA_STORAGE_PROVIDER=local` e `MEDIA_STORAGE_PATH
 No beta, use `MEDIA_STORAGE_PROVIDER=supabase`; a API mantém a chave privilegiada
 somente no servidor. Metadados, checksum SHA-256, autoria e vínculo com a sessão
 continuam no PostgreSQL.
+
+## Dupla privada e motivação
+
+Os módulos `/api/v1/duo` e `/api/v1/motivation` adicionam parceria privada entre
+duas pessoas, metas individuais com progresso cooperativo, encontros,
+lembranças com fotos opcionais e seleção de recompensas por conta. Lembretes
+são exibidos somente no app; não há envio de push, e-mail ou SMS.
+
+Esta entrega exige a migration **V16** e o frontend compatível. O acesso às
+fotos privadas depende do vínculo ativo; encerrar a parceria revoga o acesso
+de ambos e remove o conteúdo compartilhado daquele espaço. A seleção de
+títulos, molduras e itens é validada e persistida pela API; temas mudam apenas
+a apresentação. Consulte [dupla e motivação](docs/duo-motivation.md) para
+endpoints, limites, privacidade e atualização do ambiente.
+
+A coleção distingue oito marcos por dias de atividade e títulos legados por
+conquista auditada (`Vanguarda`/`WEEKLY_THREE` e `Ascendente`/`XP_500`). A resposta
+indica `progressUnit` igual a `dias` ou `conquista`; os requisitos anteriores
+não são convertidos em dias acumulados. Na ausência de preferências da V16,
+um título anteriormente selecionado e ainda elegível é preservado.
 
 ## Progressão avançada
 
@@ -109,6 +156,8 @@ segredos locais e não deve ser adicionado ao Git.
 - `plan`: planos de treino versionados.
 - `workout`: sessões, autosave e conclusão idempotente.
 - `feed`: fotos, publicações, diário e comentários.
+- `duo`: parceria privada, encontros, lembranças e incentivos.
+- `motivation`: próximos marcos e seleção de recompensas por conta.
 - `security`: JWT e configuração de acesso.
 - `shared`: auditoria e respostas de erro.
 - `config`: configurações transversais.

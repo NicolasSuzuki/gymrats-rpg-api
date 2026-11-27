@@ -24,7 +24,9 @@ public class AuthService {
   public AuthResponse register(RegisterRequest request) {
     var email = normalize(request.email());
     if (users.existsByEmailIgnoreCase(email)) throw new EmailAlreadyUsedException();
-    var user = users.save(new User(request.name().trim(), email, passwordEncoder.encode(request.password())));
+    var user = new User(request.name().trim(), email, passwordEncoder.encode(request.password()));
+    user.recordRegistrationConsent("2026-11-26", Boolean.TRUE.equals(request.photoStorageConsent()));
+    users.save(user);
     return tokenFor(user);
   }
 

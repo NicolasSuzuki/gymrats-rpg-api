@@ -25,13 +25,13 @@ class AuthServiceTest {
     when(encoder.encode("password123")).thenReturn("hash");
     when(users.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
     when(jwt.generate(any(User.class))).thenReturn("token"); when(jwt.expirationSeconds()).thenReturn(3600L);
-    var response = service.register(new RegisterRequest("Nicolas", " NICOLAS@EXAMPLE.COM ", "password123"));
+    var response = service.register(new RegisterRequest("Nicolas", " NICOLAS@EXAMPLE.COM ", "password123", true, null, false));
     assertThat(response.accessToken()).isEqualTo("token");
     verify(users).save(argThat(user -> user.getEmail().equals("nicolas@example.com") && user.getPasswordHash().equals("hash")));
   }
   @Test void rejectsDuplicatedEmail() {
     when(users.existsByEmailIgnoreCase("nicolas@example.com")).thenReturn(true);
-    assertThatThrownBy(() -> service.register(new RegisterRequest("Nicolas", "nicolas@example.com", "password123"))).isInstanceOf(EmailAlreadyUsedException.class);
+    assertThatThrownBy(() -> service.register(new RegisterRequest("Nicolas", "nicolas@example.com", "password123", true, null, false))).isInstanceOf(EmailAlreadyUsedException.class);
     verify(users, never()).save(any());
   }
 }

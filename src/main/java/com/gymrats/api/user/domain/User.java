@@ -22,6 +22,9 @@ public class User extends AuditableEntity {
   @Column(name = "selected_title", length = 80) private String selectedTitle;
   @Column(name = "ranking_visible", nullable = false) private boolean rankingVisible = true;
   @Column(name = "deleted_at") private Instant deletedAt;
+  @Column(name = "terms_accepted_at") private Instant termsAcceptedAt;
+  @Column(name = "terms_version", length = 40) private String termsVersion;
+  @Column(name = "photo_storage_consent", nullable = false) private boolean photoStorageConsent;
   @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "user_modalities", joinColumns = @JoinColumn(name = "user_id"))
   @Enumerated(EnumType.STRING)
@@ -42,6 +45,14 @@ public class User extends AuditableEntity {
   public String getSelectedTitle() { return selectedTitle; }
   public boolean isRankingVisible() { return rankingVisible; }
   public Instant getDeletedAt() { return deletedAt; }
+  public Instant getTermsAcceptedAt() { return termsAcceptedAt; }
+  public String getTermsVersion() { return termsVersion; }
+  public boolean isPhotoStorageConsent() { return photoStorageConsent; }
+  public void recordRegistrationConsent(String version, boolean photoStorageConsent) {
+    this.termsAcceptedAt = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
+    this.termsVersion = version;
+    this.photoStorageConsent = photoStorageConsent;
+  }
   public Set<Modality> getModalities() { return Set.copyOf(modalities); }
   public void updateProfile(String name, Set<Modality> modalities, CharacterClass characterClass, Universe universe) {
     if (name != null) this.name = name.trim();
@@ -67,6 +78,7 @@ public class User extends AuditableEntity {
     this.characterClass = null;
     this.selectedTitle = null;
     this.rankingVisible = false;
+    this.photoStorageConsent = false;
     this.modalities.clear();
     this.deletedAt = Instant.now();
   }

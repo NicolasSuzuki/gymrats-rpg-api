@@ -18,6 +18,9 @@ public record WorkoutSessionResponse(
     Integer xpAwarded,
     WorkoutSummaryResponse summary) {
   public static WorkoutSessionResponse from(WorkoutSession session) {
+    return from(session, java.util.Map.of());
+  }
+  public static WorkoutSessionResponse from(WorkoutSession session, java.util.Map<UUID, String> names) {
     var items = session.getExercises();
     var completed = items.stream().filter(item -> item.getStatus() == SessionExerciseStatus.COMPLETED).count();
     var skipped = items.stream().filter(item -> item.getStatus() == SessionExerciseStatus.SKIPPED).count();
@@ -28,7 +31,7 @@ public record WorkoutSessionResponse(
         session.getSource().name(),
         session.getPlanVersion() == null ? null : PlanSnapshotResponse.from(session.getPlanVersion()),
         items.stream().map(item -> item.getExerciseId()).toList(),
-        items.stream().map(SessionExerciseResponse::from).toList(),
+        items.stream().map(item -> SessionExerciseResponse.from(item, names.get(item.getExerciseId()))).toList(),
         session.getStartedAt(),
         session.getCompletedAt(),
         session.getXpAwarded(),

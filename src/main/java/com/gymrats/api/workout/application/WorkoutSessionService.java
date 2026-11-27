@@ -30,18 +30,21 @@ public class WorkoutSessionService {
   private final WorkoutPlanService plans;
   private final ExerciseService exercises;
   private final ProgressionService progression;
+  private final com.gymrats.api.exercise.domain.ExerciseRepository exerciseNames;
 
   public WorkoutSessionService(
       WorkoutSessionRepository sessions,
       IdempotencyOperationRepository operations,
       WorkoutPlanService plans,
       ExerciseService exercises,
-      ProgressionService progression) {
+      ProgressionService progression,
+      com.gymrats.api.exercise.domain.ExerciseRepository exerciseNames) {
     this.sessions = sessions;
     this.operations = operations;
     this.plans = plans;
     this.exercises = exercises;
     this.progression = progression;
+    this.exerciseNames = exerciseNames;
   }
 
   @Transactional
@@ -75,13 +78,13 @@ public class WorkoutSessionService {
         session.addExercise(new WorkoutSessionExercise(session, exercise.getId(), position));
       }
     }
-    return WorkoutSessionResponse.from(sessions.save(session));
+    return response(sessions.save(session));
   }
 
   @Transactional(readOnly = true)
   public WorkoutSessionResponse active(User user) {
     return sessions.findByOwnerIdAndStatus(user.getId(), WorkoutSessionStatus.IN_PROGRESS)
-        .map(WorkoutSessionResponse::from)
+        .map(this::response)
         .orElseThrow(() -> new ResourceNotFoundException("Nenhuma sessão em andamento."));
   }
 
@@ -94,7 +97,7 @@ public class WorkoutSessionService {
       if (!saved.getOperation().equals("COMPLETE")) {
         throw new DomainConflictException("Idempotency-Key já utilizada em outra operação.");
       }
-      return WorkoutSessionResponse.from(saved.getSession());
+      return response(saved.getSession());
     }
     sessions.findByOwnerIdAndStatus(user.getId(), WorkoutSessionStatus.IN_PROGRESS)
         .ifPresent(existing -> {
@@ -106,7 +109,7 @@ public class WorkoutSessionService {
     sessions.save(session);
     progression.awardWorkout(user, session);
     operations.save(new IdempotencyOperation(user.getId(), key, "COMPLETE", session));
-    return WorkoutSessionResponse.from(session);
+    return response(session);
   }
 
   @Transactional
@@ -163,7 +166,7 @@ public class WorkoutSessionService {
           || !saved.getSession().getId().equals(sessionId)) {
         throw new DomainConflictException("Idempotency-Key já utilizada em outra operação.");
       }
-      return WorkoutSessionResponse.from(saved.getSession());
+      return response(saved.getSession());
     }
     var session = requireOwned(user, sessionId);
     ensureInProgress(session);
@@ -171,7 +174,17 @@ public class WorkoutSessionService {
     sessions.save(session);
     if (complete) progression.awardWorkout(user, session);
     operations.save(new IdempotencyOperation(user.getId(), key, operation, session));
-    return WorkoutSessionResponse.from(session);
+    return response(session);
+  }
+
+  private WorkoutSessionResponse response(WorkoutSession session) {
+    var ids = session.getExercises().stream().map(WorkoutSessionExercise::getExerciseId).toList();
+    if (ids.isEmpty()) return WorkoutSessionResponse.from(session);
+    var names = exerciseNames.findVisibleNames(ids, session.getOwner().getId()).stream()
+        .collect(java.util.stream.Collectors.toMap(
+            com.gymrats.api.exercise.domain.ExerciseRepository.ExerciseName::getId,
+            com.gymrats.api.exercise.domain.ExerciseRepository.ExerciseName::getName));
+    return WorkoutSessionResponse.from(session, names);
   }
 
   private void validateIdempotencyKey(String key) {
